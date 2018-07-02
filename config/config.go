@@ -12,22 +12,9 @@ import (
 var AppConf = &appConfig{}
 
 type appConfig struct {
-	Postgres      *postgreConf
-	Port          string
-	Debug         bool
-	InstanceTitle string
-	Senders       struct {
-		Telegram *telegramConf
-		Slack    *slackConf
-	}
-}
-
-type telegramConf struct {
-	BotToken string
-}
-
-type slackConf struct {
-	AuthToken string
+	Postgres   *postgreConf
+	Port       string
+	UploadPath string
 }
 
 type postgreConf struct {
@@ -45,20 +32,26 @@ func (c *appConfig) Load(fileNames ...string) error {
 		log.Println(".env file not found, trying fetch environment variables")
 	}
 
-
 	if e, ok := os.LookupEnv("MSITE_UI_PORT"); ok {
-		log.Printf("Notify gate port: %s\n", e)
+		log.Printf("Msite port: %s\n", e)
 		c.Port = ":" + e
 	} else {
-		log.Println("Notify gate port (default): 80")
+		log.Println("Msite port (default): 80")
 		c.Port = ":80"
+	}
+
+	if e, ok := os.LookupEnv("MSITE_UPLOAD_PATH"); ok {
+		log.Printf("Msite upload path: %s\n", e)
+		c.UploadPath = e
+	} else {
+		log.Println("Msite upload path (default): /tmp")
+		c.UploadPath = "/tmp"
 	}
 
 	c.Postgres, err = loadPostgreConfig()
 	if err != nil {
 		return err
 	}
-
 
 	return nil
 }
