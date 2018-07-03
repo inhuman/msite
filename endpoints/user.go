@@ -3,7 +3,6 @@ package endpoints
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/inhuman/msite/cache"
-	"fmt"
 	"github.com/inhuman/msite/user"
 	"github.com/inhuman/msite/db"
 )
@@ -29,7 +28,9 @@ func RegisterUser(c *gin.Context) {
 		c.JSON(500, dbErr)
 		return
 	}
-	cache.AddUserToken(u, user.GetUserToken(u))
+	//TODO: cache no needed
+	//cache.AddUserToken(u, user.GetUserToken(u))
+
 
 	u.Password = "********"
 	c.JSON(200, u)
@@ -46,19 +47,12 @@ func LoginUser(c *gin.Context)  {
 		return
 	}
 
-	fmt.Printf("%+v\n", u)
-
 	res := db.Stor.Db().Where(&user.User{Login: u.Login, Password: u.Password}).First(u)
-
-	if res.RowsAffected == 1 {
-		fmt.Printf("user found %+v\n", u)
-	}
 
 	switch  {
 	case res.RowsAffected == 0:
 		c.JSON(404, gin.H{"error": "user not found"})
 	case res.RowsAffected == 1:
-
 		c.JSON(200, gin.H{"token": user.GetUserToken(u)})
 	case res.RowsAffected > 1:
 		c.JSON(500, gin.H{"error": "user collision"})

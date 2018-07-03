@@ -9,6 +9,7 @@ import (
 )
 
 type Register struct {
+	gorm.Model
 	Login           string `form:"login" json:"login" binding:"required"`
 	Password        string `form:"password" json:"password" binding:"required"`
 	ConfirmPassword string `form:"confirm_password" json:"confirm_password" binding:"required"`
@@ -20,8 +21,6 @@ type User struct {
 	Password string `json:"password" gorm:"not null"`
 	Playlists []media.Playlist
 }
-
-
 
 func GetUserToken(u *User) string {
 	h := sha1.New()

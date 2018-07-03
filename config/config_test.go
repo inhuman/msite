@@ -18,8 +18,7 @@ POSTGRES_PORT = "5432"
 POSTGRES_DB_NAME = "notify"
 POSTGRES_USER = "root"
 POSTGRES_PASSWORD = 123
-NG_DEBUG = true
-NG_UI_PORT="8080"`)
+`)
 
 	path := fh.Name()
 	defer func() {
@@ -29,10 +28,7 @@ NG_UI_PORT="8080"`)
 
 	AppConf.Load(path)
 
-	assert.Equal(t, "telegram_bot_token", AppConf.Senders.Telegram.BotToken)
-	assert.Equal(t, "slack_auth_token", AppConf.Senders.Slack.AuthToken)
 	assert.Equal(t, "root", AppConf.Postgres.User)
-	assert.Equal(t, ":8080", AppConf.Port)
 }
 
 func createFileForTest(t *testing.T, s string) *os.File {

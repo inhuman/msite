@@ -7,39 +7,38 @@ import (
 	"net/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/gin-gonic/gin"
-	"bytes"
 	"github.com/jinzhu/gorm"
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"
-	"log"
+	"bytes"
 	"github.com/inhuman/msite/db"
-	"fmt"
-	"time"
+	"github.com/inhuman/msite/user"
+	"encoding/json"
+	mocket "github.com/Selvatico/go-mocket"
 )
 
 func TestRegisterUser(t *testing.T) {
 
-	dbm, mock := getMock(t)
-	defer dbm.Close()
+	mocket.Catcher.Register()
+	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
+
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	db.Stor.SetDb(dbm)
-
-	tt := time.Now()
-
-	//rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "deleted_at", "login", "password"}).
-	//	AddRow(1, tt, tt, nil, "test", "test_token")
-
-	mock.ExpectExec(`INSERT INTO "users" (.+)`).
-		WithArgs(tt, tt, nil, "test", "test_password").
-		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	gin.SetMode(gin.TestMode)
 	r := router.Setup()
 
-	var jsonStr = []byte(`{
-	"login": "test",
-	"password": "test_password",
-	"confirm_password": "test_password"
-}`)
+	ur := &user.Register{
+		Login: "test",
+		Password: "test_password",
+		ConfirmPassword: "test_password",
+	}
+
+	mocket.Catcher.NewMock().WithQuery(`INSERT INTO "users" (.+)`)
+
+	jsonStr, _ := json.Marshal(ur)
+
 
 	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
@@ -48,10 +47,50 @@ func TestRegisterUser(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 
-	fmt.Println(w.Body.String())
+	u := &user.User{}
+
+	json.Unmarshal(w.Body.Bytes(), u)
+
+	assert.Equal(t, u.Login, "test")
+	assert.Equal(t, u.Password, "********")
+
+}
 
 
-	endExpect(t, mock)
+func TestLoginUser(t *testing.T) {
+
+	mocket.Catcher.Register()
+	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db.Stor.SetDb(dbm)
+
+	gin.SetMode(gin.TestMode)
+	r := router.Setup()
+
+	u := &user.User{
+		Login: "test",
+		Password: "test_password",
+	}
+	jsonStr, _ := json.Marshal(u)
+
+	commonReply := []map[string]interface{}{{"login": "test", "password": "test_password"}}
+
+	mocket.Catcher.NewMock().
+		WithQuery(`SELECT * FROM "users"  WHERE "users"."deleted_at" IS NULL AND (("users"."login" = test) AND ("users"."password" = test_password)) ORDER BY "users"."id" ASC LIMIT 1`).
+		WithReply(commonReply)
+	mocket.Catcher.Logging = true
+
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonStr))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, `{"token":"c1c17c916ba11acb38b41a3d99dc678a5b3a3d78"}`, w.Body.String())
 
 }
 
@@ -73,24 +112,4 @@ func performRequest(r http.Handler, method, path string) *httptest.ResponseRecor
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	return w
-}
-
-func getMock(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
-	dbm, mck, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	gormDB, gerr := gorm.Open("postgres", dbm)
-	if gerr != nil {
-		log.Fatalf("can't open gorm connection: %s", err)
-	}
-
-	return gormDB.Set("gorm:update_column", true), mck
-}
-
-func endExpect(t *testing.T, mock sqlmock.Sqlmock) {
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
 }
