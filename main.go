@@ -8,6 +8,8 @@ import (
 	"github.com/inhuman/msite/config"
 	"log"
 	"github.com/inhuman/msite/cache"
+	"github.com/inhuman/msite/media"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -38,8 +40,14 @@ func runApp() error {
 	cache.BuildUserTokenCache()
 
 	db.Stor.Migrate(user.User{})
+	db.Stor.Migrate(media.Media{})
+	db.Stor.Migrate(media.Playlist{})
 
-	r := router.Setup()
+
+
+
+	r := router.Setup(gin.Logger(), gin.Recovery())
+
 	r.Run(":8080")
 	return nil
 }

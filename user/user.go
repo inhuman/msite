@@ -5,6 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/inhuman/msite/media"
 )
 
 type Register struct {
@@ -17,6 +18,7 @@ type User struct {
 	gorm.Model
 	Login    string `json:"login" gorm:"not null;unique"`
 	Password string `json:"password" gorm:"not null"`
+	Playlists []media.Playlist
 }
 
 

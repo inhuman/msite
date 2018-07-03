@@ -1,7 +1,9 @@
 package media
 
+import "github.com/jinzhu/gorm"
 
 type Media struct {
-	Url string
+	gorm.Model
+	Uri string
 }
 
