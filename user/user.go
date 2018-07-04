@@ -17,18 +17,16 @@ type Register struct {
 
 type User struct {
 	gorm.Model
-	Login    string `json:"login" gorm:"not null;unique"`
-	Password string `json:"password" gorm:"not null"`
-	Playlists []media.Playlist
+	Login     string           `json:"login" gorm:"not null;unique"`
+	Password  string           `json:"password" gorm:"not null"`
+	Playlists []media.Playlist `json:"playlists"`
 }
 
 func GetUserToken(u *User) string {
 	h := sha1.New()
-	h.Write([]byte(u.Login+u.Password))
+	h.Write([]byte(u.Login + u.Password))
 	return hex.EncodeToString(h.Sum(nil))
 }
-
-
 
 func GetAllUsers() []User {
 

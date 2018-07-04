@@ -66,6 +66,13 @@ func ProfileUser(c *gin.Context) {
 
 	usr := cache.GetUserTokens()[token]
 
-	c.JSON(200, usr)
+
+	u := &user.User{}
+	u.ID = usr.ID
+
+	//TODO: fetch user with playlists
+	db.Stor.Db().Find(u)
+
+	c.JSON(200, u)
 
 }
