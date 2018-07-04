@@ -4,6 +4,6 @@ import "github.com/jinzhu/gorm"
 
 type Media struct {
 	gorm.Model
-	Uri string
+	Uri string `json:"uri" gorm:"unique"`
 }
 

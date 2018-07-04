@@ -28,8 +28,8 @@ func RegisterUser(c *gin.Context) {
 		c.JSON(500, dbErr)
 		return
 	}
-	//TODO: cache no needed
-	//cache.AddUserToken(u, user.GetUserToken(u))
+
+	cache.AddUserToken(u, user.GetUserToken(u))
 
 
 	u.Password = "********"

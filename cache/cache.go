@@ -2,6 +2,8 @@ package cache
 
 import (
 	"github.com/inhuman/msite/user"
+	"github.com/gin-gonic/gin"
+	"errors"
 )
 
 var tokensCached = make(map[string]*user.User)
@@ -30,4 +32,17 @@ func AddUserToken(u *user.User, token string) {
 // InvalidateServiceTokens is used to invalidate service tokens cache
 func InvalidateUserTokens() {
 	tokensCached = make(map[string]*user.User)
+}
+
+func GetCurrentUser(c *gin.Context) (*user.User, error) {
+
+	token := c.GetHeader("X-AUTH-TOKEN")
+
+	u, ok := GetUserTokens()[token]
+
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+
+	return u, nil
 }

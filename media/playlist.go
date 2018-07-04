@@ -6,6 +6,6 @@ import (
 
 type Playlist struct {
 	gorm.Model
-	Media []Media
-	UserID uint
+	Media []Media `json:"media" gorm:"many2many:playlist_medias;association_autoupdate:false;"`
+	UserID uint `json:"user_id"`
 }
