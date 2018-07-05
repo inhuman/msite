@@ -7,28 +7,33 @@ import (
 	"net/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"bytes"
-	"github.com/inhuman/msite/db"
 	"github.com/inhuman/msite/user"
 	"encoding/json"
 	mocket "github.com/Selvatico/go-mocket"
 	"github.com/inhuman/msite/cache"
+	"github.com/jinzhu/gorm"
+	"log"
+	"github.com/inhuman/msite/db"
 )
 
-func TestRegisterUser(t *testing.T) {
+var mockedRouter *gin.Engine
 
+func init(){
 	mocket.Catcher.Register()
 	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
 
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
 
 	db.Stor.SetDb(dbm)
 
 	gin.SetMode(gin.TestMode)
-	r := router.Setup()
+	mockedRouter = router.Setup()
+}
+
+func TestRegisterUser(t *testing.T) {
 
 	ur := &user.Register{
 		Login: "test",
@@ -40,13 +45,11 @@ func TestRegisterUser(t *testing.T) {
 
 	jsonStr, _ := json.Marshal(ur)
 
-
 	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
+	mockedRouter.ServeHTTP(w, req)
 
 	u := &user.User{}
 
@@ -54,23 +57,10 @@ func TestRegisterUser(t *testing.T) {
 
 	assert.Equal(t, u.Login, "test")
 	assert.Equal(t, u.Password, "********")
-
 }
 
 
 func TestLoginUser(t *testing.T) {
-
-	mocket.Catcher.Register()
-	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	db.Stor.SetDb(dbm)
-
-	gin.SetMode(gin.TestMode)
-	r := router.Setup()
 
 	u := &user.User{
 		Login: "test",
@@ -89,10 +79,9 @@ func TestLoginUser(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	mockedRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, `{"token":"c1c17c916ba11acb38b41a3d99dc678a5b3a3d78"}`, w.Body.String())
-
 }
 
 func TestProfileUserUnauthorized(t *testing.T) {
@@ -107,19 +96,6 @@ func TestProfileUserUnauthorized(t *testing.T) {
 
 
 func TestProfileUser(t *testing.T) {
-	//TODO: implement
-
-	mocket.Catcher.Register()
-	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	db.Stor.SetDb(dbm)
-
-	gin.SetMode(gin.TestMode)
-	r := router.Setup()
 
 	u := user.User{}
 	u.ID = 123
@@ -140,7 +116,7 @@ func TestProfileUser(t *testing.T) {
 	req.Header.Set("X-AUTH-TOKEN", "c1c17c916ba11acb38b41a3d99dc678a5b3a3d78")
 
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	mockedRouter.ServeHTTP(w, req)
 
 	receivedUser := &user.User{}
 
@@ -159,3 +135,5 @@ func performRequest(r http.Handler, method, path string) *httptest.ResponseRecor
 	r.ServeHTTP(w, req)
 	return w
 }
+
+
