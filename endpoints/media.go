@@ -77,25 +77,33 @@ func DeletePlaylist(c *gin.Context) {
 
 func AddMediaToPlaylist(c *gin.Context) {
 
-	playlist := &media.Playlist{}
+	p := &media.Playlist{}
 
-	err := c.Bind(playlist)
+	err := c.Bind(p)
 	if err != nil {
 		c.JSON(402, err)
 		return
 	}
 
-	// find playlist
-	// ensure that playlist belongs to user
-	// add given media to playlist
-	// save playlist
+	//u, _ := cache.GetCurrentUser(c)
+	//TODO: check that playlist belongs to user
 
 
+	db.Stor.Db().Model(&p).Association("Media").Append(p.Media)
 }
 
 func RemoveMediaFromPlaylist(c *gin.Context) {
-	// find playlist
-	// ensure that playlist belongs to user
-	// remove given media to playlist
-	// save playlist
+
+	p := &media.Playlist{}
+
+	err := c.Bind(p)
+	if err != nil {
+		c.JSON(402, err)
+		return
+	}
+
+	//u, _ := cache.GetCurrentUser(c)
+	//TODO: check that playlist belongs to user
+
+	db.Stor.Db().Model(&p).Association("Media").Delete(p.Media)
 }

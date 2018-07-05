@@ -13,6 +13,7 @@ import (
 	"github.com/inhuman/msite/user"
 	"encoding/json"
 	mocket "github.com/Selvatico/go-mocket"
+	"github.com/inhuman/msite/cache"
 )
 
 func TestRegisterUser(t *testing.T) {
@@ -102,6 +103,51 @@ func TestProfileUserUnauthorized(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 	assert.Equal(t, `{"error":"auth required"}`, w.Body.String())
+}
+
+
+func TestProfileUser(t *testing.T) {
+	//TODO: implement
+
+	mocket.Catcher.Register()
+	dbm, err := gorm.Open(mocket.DRIVER_NAME, "any_string")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db.Stor.SetDb(dbm)
+
+	gin.SetMode(gin.TestMode)
+	r := router.Setup()
+
+	u := user.User{}
+	u.ID = 123
+	u.Login = "test"
+	u.Password = "test_password"
+
+	cache.InvalidateUserTokens()
+	cache.AddUserToken(&u, "c1c17c916ba11acb38b41a3d99dc678a5b3a3d78")
+
+	commonReply := []map[string]interface{}{{"id": "11", "media": nil}}
+
+	mocket.Catcher.NewMock().
+	WithQuery(`SELECT * FROM "playlists"  WHERE "playlists"."deleted_at" IS NULL AND (("user_id" = 123))`).
+		WithReply(commonReply)
+
+	req, _ := http.NewRequest("GET", "/api/user/profile", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-AUTH-TOKEN", "c1c17c916ba11acb38b41a3d99dc678a5b3a3d78")
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	receivedUser := &user.User{}
+
+	json.Unmarshal(w.Body.Bytes(), receivedUser)
+
+	assert.Equal(t, uint(123), receivedUser.ID)
+	assert.Equal(t, uint(11), receivedUser.Playlists[0].ID)
 }
 
 func performRequest(r http.Handler, method, path string) *httptest.ResponseRecorder {
