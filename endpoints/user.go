@@ -5,6 +5,7 @@ import (
 	"github.com/inhuman/msite/cache"
 	"github.com/inhuman/msite/user"
 	"github.com/inhuman/msite/db"
+	"github.com/inhuman/msite/media"
 )
 
 func RegisterUser(c *gin.Context) {
@@ -66,13 +67,14 @@ func ProfileUser(c *gin.Context) {
 
 	usr := cache.GetUserTokens()[token]
 
-
 	u := &user.User{}
 	u.ID = usr.ID
 
-	//TODO: fetch user with playlists
-	db.Stor.Db().Find(u)
+	p := []media.Playlist{}
 
-	c.JSON(200, u)
+	db.Stor.Db().Model(u).Related(&p)
 
+	usr.Playlists = p
+
+	c.JSON(200, usr)
 }

@@ -77,8 +77,25 @@ func DeletePlaylist(c *gin.Context) {
 
 func AddMediaToPlaylist(c *gin.Context) {
 
+	playlist := &media.Playlist{}
+
+	err := c.Bind(playlist)
+	if err != nil {
+		c.JSON(402, err)
+		return
+	}
+
+	// find playlist
+	// ensure that playlist belongs to user
+	// add given media to playlist
+	// save playlist
+
+
 }
 
 func RemoveMediaFromPlaylist(c *gin.Context) {
-
+	// find playlist
+	// ensure that playlist belongs to user
+	// remove given media to playlist
+	// save playlist
 }
